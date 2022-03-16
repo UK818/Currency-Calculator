@@ -8,10 +8,9 @@
 import UIKit
 import DropDown
 import Charts
-import Alamofire
 import SwiftyJSON
 
-class ViewController: NetworkManager {
+class ViewController: UIViewController {
 	@IBOutlet weak var currencyConvertedFrom: UIView!
 	@IBOutlet weak var currencyImg: UIImageView!
 	@IBOutlet weak var currencyLabel: UILabel!
@@ -29,18 +28,37 @@ class ViewController: NetworkManager {
 	let currencies = ["EUR", "CAD", "NGN", "USD"]
 	let currImages = ["coloncurrencysign.circle.fill", "pencil.and.outline", "coloncurrencysign.circle.fill", "pencil.and.outline"]
 	
+	var currencyData: [CurrencyData]!
+	var dates = [String]()
+	var currenciesDict: [String: JSON] = [:]
+	
+	var url = "http://data.fixer.io/api/latest?access_key=98171b4e16f57b834202d79ea535c9de"
+	
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		dropDown1Setup()
 		dropDown2Setup()
 		
-		networkRequest { response in
-			print("Response \(response)")
-		} error: { error in
-			print("Error \(error)")
-		}
+		networkCall()
 		
 		customizeChart(dataPoints: days, values: prices.map{ Double($0) })
+	}
+	
+	private func networkCall() {
+		NetworkManager.shared.networkRequest(url: url) { response in
+			self.jsonResponseHandler(response)
+//			print("Response \(response)")
+		} errorCompletion: { error in
+			print("Error \(error)")
+		}
+	}
+	
+	func jsonResponseHandler(_ json: JSON) {
+		let data = CurrencyData(json: json)
+		print(currencyData ?? [])
+		for curr in json["rates"] {
+			currenciesDict[curr.0] = curr.1
+		}
 	}
 
 	@IBAction func dropDownBtn(_ sender: Any) {
@@ -58,7 +76,7 @@ class ViewController: NetworkManager {
 	
 	private func dropDown1Setup() {
 		dropDown1.anchorView = currencyConvertedFrom
-		dropDown1.dataSource = currencies
+		dropDown1.dataSource = ["USD", "EUR"]
 		dropDown1.selectionAction = { [unowned self] (index: Int, item: String) in
 			currencyLabel.text = item
 			currency1.text = item
@@ -116,18 +134,3 @@ class ViewController: NetworkManager {
 	  }
 
 }
-
-
-//extension ViewController {
-//	func fetchData() {
-//		let request = AF.request("http://data.fixer.io/api/latest?access_key=98171b4e16f57b834202d79ea535c9de")
-//		request.responseJSON { (data) -> Void in
-//			if case data.result != nil {
-//				let swiftyJsonVar = JSON(data.result)
-//				print(swiftyJsonVar)
-//			}
-//			print(data)
-//		}
-//	}
-//	
-//}

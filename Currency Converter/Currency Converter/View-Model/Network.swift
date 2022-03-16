@@ -12,19 +12,27 @@ import SwiftyJSON
 typealias SuccessBlock = (JSON) -> Void
 typealias ErrorBlock = (Error) -> Void
 
-class NetworkManager: UIViewController {
+class NetworkManager {
+	
+	static var shared = NetworkManager()
 	
 	var successResponse: SuccessBlock!
 	var errorResponse: ErrorBlock!
-	var url = "http://data.fixer.io/api/latest?access_key=98171b4e16f57b834202d79ea535c9de"
 	
-	override func viewDidLoad() {
+	init() {
 		
 	}
 	
-	func networkRequest(success: @escaping SuccessBlock, error: @escaping ErrorBlock) {
+	func networkRequest(url: String, successCompletion: @escaping SuccessBlock, errorCompletion: @escaping ErrorBlock) {
 		AF.request(url, method: .get).responseJSON { response in
-			print(response)
+			if let error = response.error {
+				errorCompletion(error)
+			} else {
+				if let responseData = response.data {
+					let json = JSON(responseData)
+					successCompletion(json)
+				}
+			}
 		}
 	}
 	
